@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario Torremed - Traumatología</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración personalizada de Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos base y animaciones */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .schedule-card {
+            display: none;
+        }
+
+        .schedule-card.active {
+            display: block;
+        }
+        
+        /* Ocultar barra de desplazamiento en la tabla manteniendo funcionalidad */
+        .no-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .no-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .no-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .no-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 antialiased p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Encabezado -->
+        <header class="text-center bg-white rounded-2xl shadow-sm p-6 border-t-4 border-medical-500">
+            <h1 class="text-2xl md:text-4xl font-bold text-medical-900 flex items-center justify-center gap-3">
+                <span class="text-3xl">🏥</span> Horario de atención Torremed
+            </h1>
+            <p class="text-medical-600 mt-2 text-lg md:text-xl font-medium tracking-wide">Programa atención traumatológica 24 hrs</p>
+        </header>
+
+        <!-- Navegación de Doctores -->
+        <nav class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex flex-wrap justify-center gap-3" id="nav-buttons">
+                <button onclick="showSchedule('todos', this)" class="nav-btn active px-6 py-2.5 rounded-full bg-medical-600 text-white font-semibold shadow-md hover:bg-medical-500 hover:shadow-lg transition-all duration-300">
+                    📋 Todos los horarios
+                </button>
+                <button onclick="showSchedule('angel', this)" class="nav-btn px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 font-medium hover:bg-medical-100 hover:text-medical-800 transition-all duration-300">
+                    👨‍⚕️ Dr. Angel
+                </button>
+                <button onclick="showSchedule('mica', this)" class="nav-btn px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 font-medium hover:bg-medical-100 hover:text-medical-800 transition-all duration-300">
+                    👩‍⚕️ Dra. Mica
+                </button>
+                <button onclick="showSchedule('isa', this)" class="nav-btn px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 font-medium hover:bg-medical-100 hover:text-medical-800 transition-all duration-300">
+                    👩‍⚕️ Dra. Isa
+                </button>
+                <button onclick="showSchedule('omar', this)" class="nav-btn px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 font-medium hover:bg-medical-100 hover:text-medical-800 transition-all duration-300">
+                    👨‍⚕️ Dr. Omar
+                </button>
+                <button onclick="showSchedule('liu', this)" class="nav-btn px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 font-medium hover:bg-medical-100 hover:text-medical-800 transition-all duration-300">
+                    👨‍⚕️ Dr. Liu
+                </button>
+                <button onclick="showSchedule('deether', this)" class="nav-btn px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 font-medium hover:bg-medical-100 hover:text-medical-800 transition-all duration-300">
+                    👨‍⚕️ Dr. Deether 🚨
+                </button>
+            </div>
+        </nav>
+
+        <!-- Contenedor Principal de Vistas -->
+        <main class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
+            
+            <!-- VISTA: TODOS LOS HORARIOS -->
+            <div id="todos" class="schedule-card active p-6 md:p-8 fade-in">
+                <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 mb-6 flex items-center gap-2">
+                    <span>📅</span> Cronograma Semanal General
+                </h2>
+                <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr class="bg-medical-50 text-medical-900 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold border-b-2 border-medical-200">🕒 Horario</th>
+                                <th class="p-4 font-semibold border-b-2 border-medical-200">Lunes a Viernes</th>
+                                <th class="p-4 font-semibold border-b-2 border-medical-200 bg-medical-100/50">Sábado</th>
+                                <th class="p-4 font-semibold border-b-2 border-medical-200 bg-medical-100/50">Domingo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm md:text-base divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">07:00 - 09:30</td>
+                                <td class="p-4">Angel, Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors bg-slate-50/50">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">09:30 - 12:00</td>
+                                <td class="p-4">Angel, Liu, Isa</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">12:00 - 15:30</td>
+                                <td class="p-4">Mica</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors bg-slate-50/50">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">15:30 - 16:00</td>
+                                <td class="p-4">Isa</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">16:00 - 19:00</td>
+                                <td class="p-4">Isa, Omar</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors bg-slate-50/50">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">19:00 - 20:00</td>
+                                <td class="p-4">Isa</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 font-medium text-slate-600 whitespace-nowrap">20:00 - 22:30</td>
+                                <td class="p-4">Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Liu</td>
+                                <td class="p-4 text-medical-800 font-medium bg-medical-50/30">Dr. Deether</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors bg-medical-50/50">
+                                <td class="p-4 font-medium text-red-600 whitespace-nowrap flex items-center gap-2">22:30 - 07:00 🚨</td>
+                                <td class="p-4 font-medium">Dr. Deether</td>
+                                <td class="p-4 text-medical-800 font-bold bg-medical-50/30">Dr. Liu 🚨</td>
+                                <td class="p-4 text-medical-800 font-bold bg-medical-50/30">Dr. Deether 🚨</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISTA: DR. ANGEL -->
+            <div id="angel" class="schedule-card p-6 md:p-8 fade-in">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div class="bg-medical-100 p-4 rounded-full text-3xl">👨‍⚕️</div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Dr. Angel</h2>
+                        <p class="text-slate-500">Médico Traumatólogo</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-6 border border-slate-100 shadow-inner">
+                    <h3 class="text-lg font-semibold text-medical-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Horario Habitual
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <span class="bg-medical-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase mt-0.5 w-32 text-center">Lunes a Viernes</span>
+                            <span class="text-slate-700 text-lg">07:00 - 12:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VISTA: DRA. MICA -->
+            <div id="mica" class="schedule-card p-6 md:p-8 fade-in">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div class="bg-medical-100 p-4 rounded-full text-3xl">👩‍⚕️</div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Dra. Mica</h2>
+                        <p class="text-slate-500">Médica Traumatóloga</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-6 border border-slate-100 shadow-inner">
+                    <h3 class="text-lg font-semibold text-medical-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Horario Habitual
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <span class="bg-medical-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase mt-0.5 w-32 text-center">Lunes a Viernes</span>
+                            <span class="text-slate-700 text-lg">12:00 - 15:30</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VISTA: DRA. ISA -->
+            <div id="isa" class="schedule-card p-6 md:p-8 fade-in">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div class="bg-medical-100 p-4 rounded-full text-3xl">👩‍⚕️</div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Dra. Isa</h2>
+                        <p class="text-slate-500">Médica Traumatóloga</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-6 border border-slate-100 shadow-inner">
+                    <h3 class="text-lg font-semibold text-medical-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Horario Habitual (Doble Turno)
+                    </h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <span class="bg-medical-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase mt-0.5 w-32 text-center">Lunes a Viernes</span>
+                            <div class="flex flex-col">
+                                <span class="text-slate-700 text-lg">09:30 - 12:00 <span class="text-sm text-slate-400 ml-2">(Turno Mañana)</span></span>
+                                <span class="text-slate-700 text-lg">15:30 - 20:00 <span class="text-sm text-slate-400 ml-2">(Turno Tarde)</span></span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VISTA: DR. OMAR -->
+            <div id="omar" class="schedule-card p-6 md:p-8 fade-in">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div class="bg-medical-100 p-4 rounded-full text-3xl">👨‍⚕️</div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Dr. Omar</h2>
+                        <p class="text-slate-500">Médico Traumatólogo</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-6 border border-slate-100 shadow-inner">
+                    <h3 class="text-lg font-semibold text-medical-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Horario Habitual
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <span class="bg-medical-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase mt-0.5 w-32 text-center">Lunes a Viernes</span>
+                            <span class="text-slate-700 text-lg">16:00 - 19:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VISTA: DR. LIU -->
+            <div id="liu" class="schedule-card p-6 md:p-8 fade-in">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div class="bg-medical-100 p-4 rounded-full text-3xl">👨‍⚕️</div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Dr. Liu</h2>
+                        <p class="text-slate-500">Médico Traumatólogo - Especialista Fines de Semana</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 rounded-xl p-6 border border-slate-100 shadow-inner">
+                        <h3 class="text-lg font-semibold text-medical-800 mb-4">Días Laborales</h3>
+                        <ul class="space-y-4">
+                            <li class="flex flex-col gap-1">
+                                <span class="bg-medical-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase w-max">Lunes a Viernes</span>
+                                <span class="text-slate-700 mt-2">Mañana: <strong class="text-lg ml-1">07:00 - 12:00</strong></span>
+                                <span class="text-slate-700">Noche: <strong class="text-lg ml-1">20:00 - 22:30</strong></span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-medical-50 rounded-xl p-6 border border-medical-100 shadow-inner">
+                        <h3 class="text-lg font-semibold text-medical-900 mb-4">Fin de Semana</h3>
+                        <ul class="space-y-3">
+                            <li class="flex flex-col gap-2">
+                                <span class="bg-medical-800 text-white text-xs font-bold px-3 py-1 rounded-full uppercase w-max">Sábados</span>
+                                <span class="text-slate-700 text-lg font-medium flex items-center gap-2">
+                                    Cobertura Total 24 Horas
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: DR. DEETHER -->
+            <div id="deether" class="schedule-card p-6 md:p-8 fade-in">
+                <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div class="bg-red-50 p-4 rounded-full text-3xl">🚨</div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Dr. Deether</h2>
+                        <p class="text-slate-500">Médico Traumatólogo - Guardias y Emergencias</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-red-50 rounded-xl p-6 border border-red-100 shadow-inner">
+                        <h3 class="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
+                            🌙 Guardia Nocturna
+                        </h3>
+                        <ul class="space-y-3">
+                            <li class="flex flex-col gap-2">
+                                <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase w-max">Lunes a Viernes</span>
+                                <span class="text-slate-800 text-lg font-medium">Desde 22:30 en adelante</span>
+                                <p class="text-sm text-red-700 mt-1">Atención exclusiva de emergencias y cobertura de guardia nocturna.</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-medical-50 rounded-xl p-6 border border-medical-100 shadow-inner">
+                        <h3 class="text-lg font-semibold text-medical-900 mb-4">Fin de Semana</h3>
+                        <ul class="space-y-3">
+                            <li class="flex flex-col gap-2">
+                                <span class="bg-medical-800 text-white text-xs font-bold px-3 py-1 rounded-full uppercase w-max">Domingos</span>
+                                <span class="text-slate-700 text-lg font-medium">Cobertura Total 24 Horas</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        
+        <footer class="text-center text-slate-400 text-sm py-4">
+            Torremed &copy; 2024 - Servicio de Traumatología
+        </footer>
+    </div>
+
+    <!-- Script de Lógica -->
+    <script>
+        function showSchedule(doctorId, btnElement) {
+            // 1. Ocultar todas las tarjetas
+            const cards = document.querySelectorAll('.schedule-card');
+            cards.forEach(card => {
+                card.classList.remove('active');
+            });
+
+            // 2. Mostrar la tarjeta seleccionada
+            const selectedCard = document.getElementById(doctorId);
+            if(selectedCard) {
+                selectedCard.classList.add('active');
+            }
+
+            // 3. Resetear estilos de todos los botones
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                // Quitar estilos activos (Azul)
+                btn.classList.remove('bg-medical-600', 'text-white', 'shadow-md');
+                // Añadir estilos inactivos (Gris)
+                btn.classList.add('bg-slate-100', 'text-slate-700');
+            });
+
+            // 4. Aplicar estilo activo al botón presionado
+            btnElement.classList.remove('bg-slate-100', 'text-slate-700');
+            btnElement.classList.add('bg-medical-600', 'text-white', 'shadow-md');
+        }
+    </script>
+</body>
+</html>
